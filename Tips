@@ -1,0 +1,88 @@
+# =============================================
+# BUG BOUNTY & PENETRATION TESTING CHEATSHEET
+# =============================================
+
+# ----------------------------
+# 1. RECONNAISSANCE & SUBDOMAINS
+# ----------------------------
+
+# Passive Subdomain Discovery
+subfinder -d target.com -o subs.txt  
+amass enum -passive -d target.com -o subs_amass.txt  
+assetfinder --subs-only target.com | tee subs_asset.txt  
+
+# Active Subdomain Bruteforcing
+gobuster dns -d target.com -w ~/wordlists/subdomains-top1m.txt -t 50 -o gobuster.out  
+
+# Resolve Live Hosts
+cat subs.txt | httpx -silent -status-code -title -tech-detect -o live_subs.txt  
+
+# ----------------------------
+# 2. HIDDEN PATHS & ENDPOINTS
+# ----------------------------
+
+# Directory/File Fuzzing
+ffuf -u https://target.com/FUZZ -w ~/wordlists/common.txt -t 100 -o fuzz_results.json  
+
+# API Endpoint Discovery
+gau target.com | grep "api" | sort -u > api_endpoints.txt  
+katana -u https://target.com -d 3 -jc -kf -o katana_out.txt  
+
+# ----------------------------
+# 3. VULNERABILITY SCANNING
+# ----------------------------
+
+# SQL Injection Test
+sqlmap -u "https://target.com/page?id=1" --batch --crawl=2  
+
+# XSS Test
+dalfox url 'https://target.com/search?q=1' -b your-burp-collab.net  
+
+# Open Redirect Check
+waybackurls target.com | gf redirect | qsreplace 'https://evil.com' | httpx -fr -mr 'evil.com'  
+
+# ----------------------------
+# 4. AUTH BYPASS & SSRF
+# ----------------------------
+
+# 403 Bypass Tricks
+curl -i https://target.com/admin -H "X-Forwarded-For: 127.0.0.1"  
+curl -i https://target.com/private -H "Referer: https://target.com"  
+
+# SSRF Test
+ffuf -u https://target.com/proxy?url=FUZZ -w ~/wordlists/ssrf.txt -t 50  
+
+# ----------------------------
+# 5. AUTOMATION & WORKFLOW
+# ----------------------------
+
+# Full Recon Pipeline
+subfinder -d target.com -o subs.txt | httpx -title -tech-detect -status-code -o live.txt | waybackurls | gf xss | dalfox pipe  
+
+# Subdomain Monitoring
+while true; do subfinder -d target.com -silent | anew subs.txt | notify -bulk; sleep 86400; done  
+
+# ----------------------------
+# 6. BONUS ONE-LINERS
+# ----------------------------
+
+# Find .git directories
+gau target.com | grep '\.git/' | httpx -status-code -mc 200  
+
+# Extract JavaScript Files
+katana -u https://target.com -jc -d 2 | grep '\.js$' | httpx -silent -sr -srd js_files  
+
+# CORS Misconfiguration Check
+httpx -l targets.txt -headers "Origin: https://evil.com" -mr "evil.com"  
+
+# ----------------------------
+# TOOL INSTALLATION (ONE-TIME)
+# ----------------------------
+go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest  
+go install github.com/tomnomnom/assetfinder@latest  
+go install github.com/tomnomnom/waybackurls@latest  
+pip install sqlmap  
+
+# =============================================
+# TIP: Replace "target.com" with your target!
+# =============================================
