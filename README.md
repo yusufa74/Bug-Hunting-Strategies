@@ -1,4 +1,4 @@
-# Bug-Hunting-Strategies
+# Bug-Hunting-Methodologies
 
 Welcome to my collection of bug hunting approaches and strategies!  
 This repository contains notes, techniques, and personal workflows that I use for vulnerability research and bug bounty hunting.
